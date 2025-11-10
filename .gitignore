@@ -1,0 +1,86 @@
+# Notes de travail
+.api-notes.md
+
+# Environnements Python
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+
+# Secrets et configuration locale
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.crt
+secrets/
+
+# Donnees generees ou lourdes (sauf echantillon explicite)
+**/data/raw/
+**/data/processed/
+**/data/graph/
+**/data/synthetic/
+**/data_stress/
+*.csv
+!projects/credit-scoring/data/external/macro_uemoa.csv
+*.xls
+*.xlsx
+*.parquet
+*.feather
+*.data
+
+# Modeles et artefacts binaires
+*.joblib
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.onnx
+*.h5
+**/artifacts/
+**/outputs/
+
+# Documents et archives
+*.pdf
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.docx
+*.pptx
+
+# Builds et dependances
+node_modules/
+build/
+dist/
+
+# Logs et fichiers temporaires
+*.log
+logs/
+*.tmp
+*.bak
+*.swp
+
+# Systeme et IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Outils d'assistance locaux
+.claude/
+.codex/
+.agents/
+graphify-out/
