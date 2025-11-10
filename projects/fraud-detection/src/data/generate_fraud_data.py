@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 =============================================================================
-PAYLINK AFRICA - FRAUD DETECTION DATA GENERATOR
+MOBILE PAYMENT (SYNTHETIC) - FRAUD DETECTION DATA GENERATOR
 =============================================================================
 Point d'entrée principal pour la génération de données.
 Usage: python generate_fraud_data.py
@@ -23,7 +23,7 @@ warnings.filterwarnings('ignore')
 def generate_full_dataset():
     """Orchestre la génération complète du dataset."""
     print("=" * 70)
-    print("PAYLINK AFRICA - FRAUD DETECTION DATA GENERATOR")
+    print("MOBILE PAYMENT (SYNTHETIC) - FRAUD DETECTION DATA GENERATOR")
     print("=" * 70)
     
     # 1. Génération des comptes
