@@ -1,6 +1,26 @@
-# ds-finance-quant
-
-Quatre chaînes de risque bancaire, de la génération des données jusqu'aux API de scoring, bâties sur des données synthétiques parce que les vraies sont confidentielles et que le modèle doit rester honnête quand même.
+<div align="center">
+  <h1>ds-finance-quant</h1>
+  <p><b>Quatre chaînes de risque bancaire, de la génération des données jusqu'aux API de scoring, bâties sur des données synthétiques parce que les vraies sont confidentielles et que le modèle doit rester honnête quand même.</b></p>
+  <p>
+    <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
+    <img src="https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white" alt="scikit-learn"/>
+    <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch"/>
+    <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"/>
+    <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit"/>
+    <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/Licence-Tous%20droits%20r%C3%A9serv%C3%A9s-lightgrey?style=flat-square" alt="Licence : tous droits réservés"/>
+    <img src="https://img.shields.io/badge/Langage-Python%203.11-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11"/>
+  </p>
+  <p>
+    <a href="#démarrer-en-cinq-minutes">Démarrer</a> ·
+    <a href="#architecture">Architecture</a> ·
+    <a href="#stack-technique">Stack</a> ·
+    <a href="#structure-du-dépôt">Structure</a> ·
+    <a href="#tests">Tests</a>
+  </p>
+</div>
 
 ## Ce que ça apporte
 
@@ -25,7 +45,7 @@ PYTHONPATH=src python -m ews_credit.cli --n-clients 15000
 
 Quatre fichiers (`clients.csv`, `credits.csv`, `panel_mensuel.csv`, `labels.csv`) sortent dans `data/synthetic/`, avec le taux de bascule en défaut à 3 mois affiché en fin d'exécution. Pour le scoring de crédit et la fraude, lancez `python src/data/generator.py` puis `python master_pipeline.py` (crédit), ou `python src/data/generate_fraud_data.py` puis `python master_pipeline.py` (fraude), depuis le dossier du sous-projet. Python 3.11 est la version des Dockerfile.
 
-## Comment ça marche
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -49,15 +69,16 @@ Trois choix structurent le code.
 
 Côté données, le générateur de portefeuille module ses transitions de retard avec des fréquences mesurées dans le jeu Kaggle Home Credit Default Risk (documentées dans `config.py`), plutôt que des taux choisis au hasard.
 
-## Stack
+## Stack technique
 
-| Domaine | Outils |
-|---|---|
-| Données et calcul | pandas, numpy, scikit-learn |
-| Modèles de crédit | LightGBM, XGBoost, interpret (EBM), SHAP, LIME |
-| Modèles de fraude | LightGBM, PyTorch, imbalanced-learn, networkx |
-| Services | FastAPI, Streamlit, Docker et docker-compose |
-| Tests | pytest |
+| Domaine | Technologies | Rôle dans le projet |
+|---|---|---|
+| Données et calcul | <img src="https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white" alt="pandas"/> <img src="https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white" alt="NumPy"/> <img src="https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white" alt="scikit-learn"/> <img src="https://img.shields.io/badge/imbalanced--learn-blue?style=flat-square" alt="imbalanced-learn"/> | Génération des portefeuilles synthétiques, prétraitement, rééchantillonnage SMOTE, calibration |
+| Modèles de crédit | <img src="https://img.shields.io/badge/LightGBM-2980B9?style=flat-square" alt="LightGBM"/> <img src="https://img.shields.io/badge/XGBoost-189AB4?style=flat-square" alt="XGBoost"/> <img src="https://img.shields.io/badge/interpret%20(EBM)-blue?style=flat-square" alt="interpret (EBM)"/> <img src="https://img.shields.io/badge/SHAP-orange?style=flat-square" alt="SHAP"/> <img src="https://img.shields.io/badge/LIME-green?style=flat-square" alt="LIME"/> | Probabilité de défaut, provision ECL, explication des scores |
+| Modèles de fraude | <img src="https://img.shields.io/badge/LightGBM-2980B9?style=flat-square" alt="LightGBM"/> <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch"/> <img src="https://img.shields.io/badge/imbalanced--learn-blue?style=flat-square" alt="imbalanced-learn"/> <img src="https://img.shields.io/badge/networkx-4B8BBE?style=flat-square" alt="networkx"/> | Isolation Forest, autoencodeur, stacking, variables de graphe |
+| Services | <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"/> <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white" alt="Streamlit"/> <img src="https://img.shields.io/badge/Plotly-3F4F75?style=flat-square&logo=plotly&logoColor=white" alt="Plotly"/> | API de scoring et dashboard de fraude |
+| Infrastructure | <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker"/> | Dockerfile et docker-compose pour les API (Python 3.11) |
+| Tests | <img src="https://img.shields.io/badge/pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white" alt="pytest"/> | Tests unitaires de l'ECL, du prétraitement, des métriques de fraude et du split temporel |
 
 ## Structure du dépôt
 
@@ -73,7 +94,11 @@ ds-finance-quant/
 └── LICENSE
 ```
 
-Chaque sous-projet a son `requirements.txt` (sauf `stress-testing`, un script unique) et son README : [credit-scoring](projects/credit-scoring), [fraud-detection](projects/fraud-detection), [data-engineering-pipeline](projects/data-engineering-pipeline), [stress-testing](projects/stress-testing). Pour lancer les tests : `pip install pytest`, puis `python -m pytest tests` dans `credit-scoring` ou `fraud-detection`.
+Chaque sous-projet a son `requirements.txt` (sauf `stress-testing`, un script unique) et son README : [credit-scoring](projects/credit-scoring), [fraud-detection](projects/fraud-detection), [data-engineering-pipeline](projects/data-engineering-pipeline), [stress-testing](projects/stress-testing).
+
+## Tests
+
+Pour lancer les tests : `pip install pytest`, puis `python -m pytest tests` dans `credit-scoring` ou `fraud-detection`.
 
 ## Limites et suite
 
