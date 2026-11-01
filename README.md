@@ -1,69 +1,63 @@
 # ds-finance-quant
 
-Projets de data science appliqués à la finance quantitative : scoring de crédit IFRS 9, détection de fraude sur transactions et génération de portefeuilles synthétiques de risque de crédit, tous construits sur des données synthétiques calibrées sur le contexte UEMOA.
+Quatre chaînes de risque bancaire, de la génération des données jusqu'aux API de scoring, bâties sur des données synthétiques parce que les vraies sont confidentielles et que le modèle doit rester honnête quand même.
 
-## Problème traité
+## Ce que ça apporte
 
-Les données bancaires réelles (clients, transactions, impayés) sont confidentielles. Ce dépôt reconstitue des jeux de données synthétiques réalistes, puis construit dessus les chaînes de traitement qu'un service de risque utiliserait : modèle de probabilité de défaut avec provisionnement ECL, scoring de fraude à fort déséquilibre de classes, suivi mensuel d'un portefeuille avec classification en stages IFRS 9.
+- **Des chaînes complètes, pas des notebooks isolés.** Scoring de crédit IFRS 9 (probabilité de défaut, provision ECL, API FastAPI), détection de fraude (Isolation Forest, autoencodeur, LightGBM, stacking, API et dashboard Streamlit), générateur de portefeuille et données de stress testing.
+- **Des garde-fous contre l'optimisme.** Split temporel strict avec contrôle de fuite, calibration isotonique sur des données non rééchantillonnées, validation en laissant un pays de côté (`leave_one_country_out`).
+- **Un métier isolé du bruit.** Les règles IFRS 9 de classement en stages vivent dans des fonctions pures, testables, séparées de la génération aléatoire. Les tests couvrent l'ECL, le prétraitement, les métriques de fraude, l'Isolation Forest et le split temporel.
 
-## Sous-projets
+## Le problème
 
-| Dossier | Contenu | Technologies principales |
-|---|---|---|
-| [`projects/credit-scoring`](projects/credit-scoring) | Modèle de probabilité de défaut à 12 mois : EDA, preprocessing comparé, sélection de variables par consensus, benchmark de modèles (dont EBM), calibration, scénarios macro, calcul d'ECL, API de scoring | scikit-learn, LightGBM, XGBoost, interpret (EBM), SHAP, LIME, FastAPI |
-| [`projects/fraud-detection`](projects/fraud-detection) | Détection de fraude sur transactions : features transactionnelles, comportementales et de graphe, Isolation Forest, autoencodeur, LightGBM, stacking, seuil adaptatif (bandit), API et dashboard | LightGBM, PyTorch, imbalanced-learn, networkx, FastAPI, Streamlit |
-| [`projects/data-engineering-pipeline`](projects/data-engineering-pipeline) | Générateur de portefeuille de crédit (clients, crédits, panel mensuel de retards, labels de bascule en défaut à 3 mois) avec règles IFRS 9 isolées dans un module de domaine | pandas, numpy |
-| [`projects/stress-testing`](projects/stress-testing) | Générateur de données macroéconomiques UEMOA, de portefeuille de prêts et de scénarios de stress | pandas, numpy |
+Un service de risque ne peut pas publier ses clients, ses transactions ni ses impayés. Impossible alors de montrer comment on construit un modèle de défaut ou de fraude. Ce dépôt reconstitue des jeux de données synthétiques dans le contexte UEMOA, puis applique dessus la méthode d'un vrai service de risque. Un exemple : si l'on évalue un modèle de fraude sur un tirage aléatoire, ses variables agrégées laissent filtrer des fraudes futures. Le score paraît excellent et ne tient pas en production. Le dépôt coupe donc le temps net entre apprentissage et test, et le vérifie.
 
-## Architecture
+## Démarrer en cinq minutes
 
-```mermaid
-flowchart LR
-    G1[Générateurs de données synthétiques] --> D[(CSV locaux, non versionnés)]
-    D --> P1[credit-scoring<br/>master_pipeline.py]
-    D --> P2[fraud-detection<br/>master_pipeline.py]
-    D --> P3[data-engineering-pipeline<br/>ews_credit.cli]
-    P1 --> A1[Artefacts modèle] --> API1[API FastAPI scoring crédit]
-    P2 --> A2[Artefacts modèle] --> API2[API FastAPI fraude + dashboard Streamlit]
-```
-
-Chaque sous-projet est autonome (son propre `requirements.txt`, ses tests, son README).
-
-## Installation
-
-Python 3.11 recommandé. Chaque sous-projet s'installe séparément :
+Le sous-projet le plus léger ne demande que pandas et numpy. Il génère un portefeuille de crédit avec son panel mensuel de retards.
 
 ```bash
 git clone <url-du-depot>
-cd ds-finance-quant/projects/credit-scoring   # ou fraud-detection, data-engineering-pipeline
-python -m venv .venv
-source .venv/bin/activate        # Windows : .venv\Scripts\activate
+cd ds-finance-quant/projects/data-engineering-pipeline
 pip install -r requirements.txt
-```
-
-## Usage
-
-```bash
-# Scoring de crédit : génération des données puis pipeline complet
-cd projects/credit-scoring
-python src/data/generator.py
-python master_pipeline.py
-
-# Détection de fraude
-cd projects/fraud-detection
-python src/data/generate_fraud_data.py
-python master_pipeline.py
-
-# Portefeuille de crédit synthétique
-cd projects/data-engineering-pipeline
 PYTHONPATH=src python -m ews_credit.cli --n-clients 15000
-
-# Données de stress testing
-cd projects/stress-testing
-python generate_stress_data.py
 ```
 
-Les détails (API, Docker, inférence) sont dans le README de chaque sous-projet. La variable `MODEL_DIR` de l'API de scoring de crédit est documentée dans `.env.example`.
+Quatre fichiers (`clients.csv`, `credits.csv`, `panel_mensuel.csv`, `labels.csv`) sortent dans `data/synthetic/`, avec le taux de bascule en défaut à 3 mois affiché en fin d'exécution. Pour le scoring de crédit et la fraude, lancez `python src/data/generator.py` puis `python master_pipeline.py` (crédit), ou `python src/data/generate_fraud_data.py` puis `python master_pipeline.py` (fraude), depuis le dossier du sous-projet. Python 3.11 est la version des Dockerfile.
+
+## Comment ça marche
+
+```mermaid
+flowchart LR
+    G1["Générateurs synthétiques<br/>(UEMOA)"] --> D[("CSV locaux<br/>non versionnés")]
+    D --> P1["credit-scoring<br/>master_pipeline.py"]
+    D --> P2["fraud-detection<br/>master_pipeline.py"]
+    D --> P3["data-engineering-pipeline<br/>ews_credit.cli"]
+    G2["stress-testing<br/>generate_stress_data.py"] --> S[("Macro, prêts,<br/>scénarios de stress")]
+    P1 --> A1["Artefacts modèle<br/>(joblib)"] --> API1["API FastAPI<br/>/score /explain"]
+    P2 --> A2["Artefacts modèle"] --> API2["API FastAPI<br/>/score /score/batch"]
+    A2 --> DASH["Dashboard Streamlit"]
+```
+
+Trois choix structurent le code.
+
+**Les règles IFRS 9 dans un module pur.** `domain/ifrs9.py` classe un encours en stage 1, 2 ou 3 d'après ses jours de retard (seuils de 30 et 90 jours, définis dans `config.py`). Aucune dépendance, aucun aléa. Le générateur de panel (`behavior.py`) importe cette définition : une règle change à un seul endroit.
+
+**Le temps coupé net.** `preprocessing/split.py` sépare l'apprentissage (avant la date de coupure) du test (après), et `check_temporal_leakage` signale tout chevauchement. En fraude, les adversaires s'adaptent : un modèle doit être jugé sur un futur qu'il n'a pas vu.
+
+**Rééquilibrer sans fausser les probabilités.** La fraude est rare. Le pipeline applique SMOTE à l'apprentissage, puis calibre LightGBM (isotonique) sur une part des données d'origine non rééchantillonnées. Le modèle apprend sur une classe fraude renforcée (15 % après SMOTE), mais ses probabilités restent lisibles. En crédit, la provision se calcule comme PD × LGD × EAD × facteur d'actualisation, avec une pondération de scénarios (`calculate_scenario_weighted_ecl`).
+
+Côté données, le générateur de portefeuille module ses transitions de retard avec des fréquences mesurées dans le jeu Kaggle Home Credit Default Risk (documentées dans `config.py`), plutôt que des taux choisis au hasard.
+
+## Stack
+
+| Domaine | Outils |
+|---|---|
+| Données et calcul | pandas, numpy, scikit-learn |
+| Modèles de crédit | LightGBM, XGBoost, interpret (EBM), SHAP, LIME |
+| Modèles de fraude | LightGBM, PyTorch, imbalanced-learn, networkx |
+| Services | FastAPI, Streamlit, Docker et docker-compose |
+| Tests | pytest |
 
 ## Structure du dépôt
 
@@ -74,31 +68,26 @@ ds-finance-quant/
 │   ├── fraud-detection/           src/, api/, dashboard/, tests/, notebooks/
 │   ├── data-engineering-pipeline/ src/ews_credit/ (config, domain, generation, cli)
 │   └── stress-testing/            generate_stress_data.py
-├── .env.example
+├── .env.example                   MODEL_DIR de l'API de scoring de crédit
 ├── .gitignore
 └── LICENSE
 ```
 
-## Tests
+Chaque sous-projet a son `requirements.txt` (sauf `stress-testing`, un script unique) et son README : [credit-scoring](projects/credit-scoring), [fraud-detection](projects/fraud-detection), [data-engineering-pipeline](projects/data-engineering-pipeline), [stress-testing](projects/stress-testing). Pour lancer les tests : `pip install pytest`, puis `python -m pytest tests` dans `credit-scoring` ou `fraud-detection`.
 
-```bash
-cd projects/credit-scoring && python -m pytest tests
-cd projects/fraud-detection && python -m pytest tests
-```
+## Limites et suite
 
-Les tests du scoring de crédit (prétraitement, ECL) et de la fraude (métriques, Isolation Forest, split temporel) ont été exécutés avec succès lors de la mise en forme du dépôt. `fraud-detection/tests/test_inference.py` suppose des modèles entraînés dans `outputs/models/` ; il n'a pas pu être validé dans l'environnement de nettoyage (échec de PyTorch sous Python 3.14). Le sous-projet `data-engineering-pipeline` n'a pas de tests automatisés.
+Le périmètre est un choix : montrer la méthode, pas un portefeuille.
 
-## Limites connues
-
-- Toutes les données sont synthétiques : les performances mesurées reflètent le générateur, pas un portefeuille réel.
-- Les artefacts de modèles et les jeux de données ne sont pas versionnés ; il faut relancer les pipelines pour les reproduire (plusieurs minutes de calcul, plusieurs Go de RAM possibles pour la fraude).
-- Les `master_pipeline.py` sont des scripts séquentiels longs, non découpés en modules testables.
-- Les notebooks sont livrés sans sorties d'exécution.
-- Le dépôt n'a pas de pipeline d'intégration continue.
+- **Données synthétiques.** Les performances mesurées décrivent le générateur. Elles servent à éprouver la chaîne, pas à prédire un portefeuille réel.
+- **Reproduction par calcul.** Jeux de données et artefacts de modèles ne sont pas versionnés. Relancer un pipeline prend plusieurs minutes, et la fraude demande beaucoup de mémoire.
+- **Pipelines en scripts.** Les `master_pipeline.py` s'exécutent de bout en bout. Les briques réutilisables vivent dans `src/` et sont testées ; le découpage du reste en modules est la suite logique.
+- **Tests à étendre.** `data-engineering-pipeline` n'en a pas encore. `fraud-detection/tests/test_inference.py` suppose des modèles déjà entraînés dans `outputs/models/`.
+- **Notebooks sans sorties** et **pas d'intégration continue** à ce stade.
 
 ## Licence
 
-Licence : tous droits réservés. Voir [LICENSE](LICENSE).
+Tous droits réservés. Lecture du code autorisée à des fins d'évaluation. Voir [LICENSE](LICENSE).
 
 ## Contact
 
